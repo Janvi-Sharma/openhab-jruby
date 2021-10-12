@@ -97,6 +97,26 @@ Feature:  changed
     When item "Switch1" state is changed to "ON"
     Then It should log 'Switch Switch Number One changed' within 5 seconds
 
+  Scenario Outline: Changed works with attachments
+    Given items:
+      | type   | name    | label             | state | 
+      | Switch | Switch1 | Switch Number One | OFF   | 
+      | Switch | Switch2 | Switch Number One | OFF   | 
+    And a deployed rule:
+      """
+      rule 'Access attachment' do
+        changed Switch1, attach: 'foo'
+        changed Switch2, attach: 'bar'
+        run { |event| logger.info("#{event.item.name} - #{event.attachment}")}
+      end
+      """
+    When item "<switch>" state is changed to "ON"
+    Then It should log '<switch> - <attachment>' within 5 seconds
+    Examples: Checks multiple attachments
+      | switch   | attachment |
+      | Switch1  | foo        |
+      | Switch2  | bar        |
+
   Scenario: Changed trigger operates newly added items in groups
     Given group "Switches"
     And items:

@@ -36,6 +36,7 @@ module OpenHAB
           @between = between || OpenHAB::DSL::TimeOfDay::ALL_DAY
           # Convert between to correct range or nil if not set
           @trigger_delays = config.trigger_delays
+          @attachments = config.attachments
         end
 
         #
@@ -77,6 +78,10 @@ module OpenHAB
           end
         end
 
+        def trigger_id(inputs)
+          inputs&.keys&.grep(/\.event$/)&.first&.chomp('.event')
+        end
+
         #
         # Returns trigger delay from inputs if it exists
         #
@@ -89,7 +94,11 @@ module OpenHAB
           # ["72698819-83cb-498a-8e61-5aab8b812623.event", "oldState", "module", \
           #  "72698819-83cb-498a-8e61-5aab8b812623.oldState", "event", "newState",\
           #  "72698819-83cb-498a-8e61-5aab8b812623.newState"]
-          @trigger_delays[inputs&.keys&.grep(/\.event$/)&.first&.chomp('.event')]
+          @trigger_delays[trigger_id(inputs)]
+        end
+
+        def attachment(inputs)
+          @attachments[trigger_id(inputs)]
         end
 
         #
@@ -253,12 +262,18 @@ module OpenHAB
         #
         #
         def process_queue(run_queue, mod, inputs)
-          event = inputs&.dig('event')
-
           while (task = run_queue.shift)
             if task.is_a? RuleConfig::Delay
               process_delay_task(inputs, mod, run_queue, task)
             else
+              event = inputs&.dig('event')
+              attachment = attachment(inputs)
+              if attachment
+                class << event
+                  attr_reader :attachment
+                end
+                event.instance_variable_set('@attachment', attachment)
+              end
               process_task(event, task)
             end
           end

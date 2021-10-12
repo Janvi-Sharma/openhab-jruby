@@ -37,6 +37,9 @@ module OpenHAB
         # @return [Array] Of trigger delays
         attr_reader :trigger_delays
 
+        # @return [Hash] Hash of trigger UIDs to attachments
+        attr_reader :attachments
+
         # @return [Array] Of trigger guards
         attr_accessor :guard
 
@@ -82,6 +85,7 @@ module OpenHAB
         def initialize(rule_name, caller_binding)
           @triggers = []
           @trigger_delays = {}
+          @attachments = {}
           @caller = caller_binding.eval 'self'
           enabled(true)
           on_start(false)
@@ -144,7 +148,8 @@ module OpenHAB
             "Run blocks: (#{run}) " \
             "on_start: (#{on_start?}) " \
             "Trigger Waits: #{trigger_delays} " \
-            "Trigger UIDs: #{triggers.map(&:id).join(', ')}"
+            "Trigger UIDs: #{triggers.map(&:id).join(', ')}" \
+            "Attachments: #{attachments} "
         end
       end
     end
